@@ -1,0 +1,5 @@
+node_modules/
+.idea/
+logs/
+config/config.json
+public/upload/

@@ -1,0 +1,13 @@
+extends layout
+
+block content
+    form#formFile(action="/newModel", method="POST" enctype='multipart/form-data')
+        label(for="fileInput") Прочитати модель з файлу
+        input#fileInput(type="file" name="file")
+    br
+    a(href="/models") Робота з існуючими моделями
+
+    script.
+        $('#fileInput').change(function () {
+            $('#formFile').submit();
+        });

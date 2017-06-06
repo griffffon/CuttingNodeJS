@@ -1,0 +1,23 @@
+{
+  "name": "cuttingnodejs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "async": "^2.4.1",
+    "body-parser": "~1.17.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.3",
+    "express": "~4.15.2",
+    "helmet": "^3.6.1",
+    "jade": "~1.11.0",
+    "log4js": "^1.1.1",
+    "morgan": "~1.8.1",
+    "multer": "^1.3.0",
+    "mysql": "^2.13.0",
+    "nconf": "^0.8.4",
+    "serve-favicon": "~2.4.2"
+  }
+}
