@@ -109,6 +109,17 @@ router.post('/newModel', function (req, res) {
                         }
                     });
 
+                    //Ставим точки против часовой стрелки
+                    detail.points = bypass(detail.points);
+
+                    //Сдвигаем центр детали в (0; 0)
+                    var xc = (maxX + minX) / 2;
+                    var yc = (maxY + minY) / 2;
+                    for (var i = 0; i < detail.points.length; i++) {
+                        detail.points[i].X = detail.points[i].X - xc;
+                        detail.points[i].Y = detail.points[i].Y - yc;
+                    }
+
                     width = Math.abs(maxX - minX);
                     height = Math.abs(maxY - minY);
                     square = width * height;
@@ -122,7 +133,6 @@ router.post('/newModel', function (req, res) {
                 dbConnect.query(modelCommand, function (error, results, fields) {
                     if (error) {
                         eLogger.error(error);
-                        console.error(error);
                         res.sendStatus(500);
                     } else {
                         modelID = results.insertId;
@@ -155,7 +165,6 @@ router.post('/newModel', function (req, res) {
                                 dbConnect.query(detailCommand, function (error, results, fields) {
                                     if (error) {
                                         eLogger.error(error);
-                                        console.error(error);
                                         res.sendStatus(500);
                                     } else {
                                         var detailID = results.insertId;
@@ -170,7 +179,6 @@ router.post('/newModel', function (req, res) {
                                         dbConnect.query(pointsSetCommand, function (error, results, fields) {
                                             if (error) {
                                                 eLogger.error(error);
-                                                console.error(error);
                                                 res.sendStatus(500);
                                             } else {
                                                 var pointsSetID = results.insertId;
@@ -190,7 +198,6 @@ router.post('/newModel', function (req, res) {
                                                     dbConnect.query(pointCommand, function (error, results, fields) {
                                                         if (error) {
                                                             eLogger.error(error);
-                                                            console.error(error);
                                                             res.sendStatus(500);
                                                         } else {
                                                             callback2();
@@ -216,12 +223,130 @@ router.post('/newModel', function (req, res) {
     });
 });
 
+//Функция обхода точек (проверка условия расположения против часовой стрелки)
+function bypass(points) {
+    var result = [];
+    var n1 = Math.floor(points.length / 3);
+    var n2 = Math.ceil(2 * points.length / 3);
+
+    var AB = {
+        X: points[n1].X - points[0].X,
+        Y: points[n1].Y - points[0].Y
+    };
+    var BC = {
+        X: points[n2].X - points[n1].X,
+        Y: points[n2].Y - points[n1].Y
+    };
+
+    var ABxBC = AB.X * BC.Y - BC.X * AB.Y;
+
+    if (ABxBC >= 0) {//поворот против часовой стрелки
+        return points;
+    } else {
+        var totalPoints = points.length - 1;
+
+        while (totalPoints >= 0) {
+            result.push(points[totalPoints]);
+            totalPoints--;
+        }
+
+        return result;
+    }
+}
+
 router.get('/models', function (req, res, next) {
     dbConnect.query('SELECT * FROM model', function (error, results, fields) {
         if (error) throw error;
         console.log('The solution is: ', results);
 
         res.send(results);
+    });
+});
+
+router.get('/models/:id', function (req, res) {
+    async.parallel([
+        function (callback) {
+            var modelSelectCommand = 'SELECT * FROM `model` WHERE `model`.`id` = ' + parseInt(req.params.id, 10) + ';';
+
+            dbConnect.query(modelSelectCommand, function (error, results, fields) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    callback(null, results);
+                }
+            });
+        },
+        function (callback) {
+            var modelSelectCommand = 'SELECT * FROM `detail` WHERE `model_id` = ' + parseInt(req.params.id, 10) + ';';
+
+            dbConnect.query(modelSelectCommand, function (error, results, fields) {
+                if (error) {
+                    callback(error, null);
+                } else {
+                    var details = [];
+
+                    async.eachSeries(results, function (result, res_callback) {
+                        var detail = {
+                            id         : result.id,
+                            model_id   : result.model_id,
+                            name       : result.name,
+                            description: result.description,
+                            points_num : result.points_num,
+                            width      : result.width,
+                            height     : result.height,
+                            depth      : result.height,
+                            anyzotropy : result.anyzotropy,
+                            square     : result.square,
+                            demand     : result.demand,
+                            points     : []
+                        };
+
+                        var pointsSetSelectCommand = 'SELECT * FROM points_set WHERE points_set.detail_id = ' + detail.id + ';';
+                        dbConnect.query(pointsSetSelectCommand, function (error, results, fields) {
+                            if (error) {
+                                res_callback(error);
+                            } else {
+                                var pointsSelectCommand = 'SELECT * FROM point WHERE point_set_id = ' + results[0].id + ';';
+                                dbConnect.query(pointsSelectCommand, function (error, results, fields) {
+                                    if (error) {
+                                        res_callback(error);
+                                    } else {
+                                        results.forEach(function (r) {
+                                            detail.points.push({
+                                                X       : r.X,
+                                                Y       : r.Y,
+                                                priority: r.priority
+                                            });
+                                        });
+
+                                        details.push(detail);
+                                        res_callback();
+                                    }
+                                });
+                            }
+                        });
+                    }, function (err) {
+                        if (err) {
+                            eLogger.error(err);
+                            callback(err, null);
+                        } else {
+                            callback(null, details);
+                        }
+                    });
+
+                }
+            });
+        }
+    ], function (err, results) {
+        if (err) {
+            eLogger.error(err);
+            res.sendStatus(500);
+        } else {
+            res.render('model', {
+                model  : results[0][0],
+                details: results[1]
+            });
+        }
     });
 });
 
