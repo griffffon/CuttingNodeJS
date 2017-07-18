@@ -21,6 +21,11 @@ var storageFiles = multer.diskStorage({
 
 var dbConnect = require('../lib/mysql').connection;
 
+var Detail = require('../classes/detail').Detail;
+var Row = require('../classes/row').Row;
+var Material = require('../classes/material').Material;
+var Options = require('../classes/options').Options;
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
     res.render('start');
@@ -256,10 +261,14 @@ function bypass(points) {
 
 router.get('/models', function (req, res, next) {
     dbConnect.query('SELECT * FROM model', function (error, results, fields) {
-        if (error) throw error;
-        console.log('The solution is: ', results);
-
-        res.send(results);
+        if (error) {
+            eLogger.error(error);
+            res.sendStatus(500);
+        } else {
+            res.render('models', {
+                models: results
+            });
+        }
     });
 });
 
@@ -349,5 +358,213 @@ router.get('/models/:id', function (req, res) {
         }
     });
 });
+
+router.get('/set/:id', function (req, res) {
+    res.render('set', {
+        rows: null
+    });
+});
+
+router.post('/generate', function (req, res) {
+    var material = new Material(req.body.matWidth, req.body.matHeight, req.body.matDepth);
+    var options = new Options(req.body.edgeDistance, req.body.detailsBridge);
+
+    var whereArray = '';
+    var details_ids = [];
+    for (var key in req.body) {
+        if (key.indexOf('detail-') > -1) {
+            details_ids.push(key.split('-')[1]);
+        }
+    }
+
+    details_ids.forEach(function (id) {
+        whereArray += '"' + id + '"';
+        if (details_ids.indexOf(id) !== (details_ids.length - 1)) {
+            whereArray += ', ';
+        }
+    });
+
+    var detailsSelectCommand = 'SELECT * FROM `cutting`.`detail` INNER JOIN `points_set` ON `detail`.`id`=`points_set`.`detail_id` INNER JOIN `point` ON `points_set`.`id`=`point`.`point_set_id` WHERE `detail`.`id` IN (' + whereArray + ');';
+    dbConnect.query(detailsSelectCommand, function (error, results, fields) {
+        if (error) {
+            eLogger.error(error);
+            res.sendStatus(500);
+        } else {
+            var details = [];
+
+            var detailsLoc = [];
+            // var details = results;
+
+            results.forEach(function (result) {
+                var currDetailIndex = -1;
+                for (var i = 0; i < detailsLoc.length; i++) {
+                    if (currDetailIndex === -1) {
+                        if (parseInt(result.detail_id, 10) === parseInt(detailsLoc[i].detail_id, 10)) {
+                            currDetailIndex = i;
+                        }
+                    }
+                }
+
+                if (currDetailIndex >= 0) {
+                    detailsLoc[currDetailIndex].points.push({
+                        x: result.X,
+                        y: result.Y
+                    });
+                } else {
+                    detailsLoc.push({
+                        detail_id  : result.detail_id,
+                        name       : result.name,
+                        description: result.description,
+                        anyzotropy : result.anyzotropy,
+                        demand     : result.demand,
+                        depth      : result.depth,
+                        width      : result.width,
+                        height     : result.height,
+                        points     : [{
+                            x: result.X,
+                            y: result.Y
+                        }]
+                    });
+                }
+            });
+
+            detailsLoc.forEach(function (detailLoc) {
+                var detail = new Detail(detailLoc.detail_id, detailLoc.name, detailLoc.description, detailLoc.anyzotropy,
+                    detailLoc.demand, detailLoc.depth, detailLoc.width, detailLoc.height, detailLoc.points);
+                detail.updatePolarPoint();
+                details.push(detail);
+            });
+
+            var materialInsertCommand = 'INSERT INTO `material` ' +
+                '(`name`, ' +
+                '`description`, ' +
+                '`width`, ' +
+                '`height`, ' +
+                '`depth`,' +
+                '`anyzotropy`,' +
+                '`square`)' +
+                'VALUES' +
+                '("Матеріал",' +
+                '"Матеріал",' +
+                material.width + ',' +
+                material.height + ',' +
+                material.depth + ',' +
+                '0,' +
+                material.square +
+                ');';
+
+            dbConnect.query(materialInsertCommand, function (error, results, fields) {
+                if (error) {
+                    eLogger.error(error);
+                    res.sendStatus(500);
+                } else {
+                    generateRows(details, material, options, function (err, rows) {
+                        if (err) {
+                            eLogger.error(err);
+                            res.sendStatus(500);
+                        } else {
+                            console.log(rows);
+                            res.render('rows_temp', {
+                                rows    : rows,
+                                material: material
+                            });
+                            //res.redirect('/schemes/0');
+                            // res.render('schemes', {
+                            //     rows: rows
+                            // });
+                            // res.send(rows);
+                        }
+                    });
+                    /*generate(details, material, function (err, set) {
+                     if (err) {
+                     eLogger.error(err);
+                     res.sendStatus(500);
+                     } else {
+                     res.send(details);
+                     }
+                     });*/
+                }
+            });
+        }
+    })
+    ;
+});
+
+function generate(details, material, options, callback) {
+    generateRows(details, material, options, function (err, rows) {
+        if (err) {
+            callback(err, null);
+        } else {
+            generateLayouts(rows, material, options, function (err, layouts) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    generateSections(layouts, material, options, function (err, sections) {
+                        if (err) {
+                            callback(err, null);
+                        } else {
+                            generateScheme(sections, material, options, function (err, schemes) {
+                                if (err) {
+                                    callback(err, null);
+                                } else {
+                                    generateSet(schemes, material, options, function (err, set) {
+                                        if (err) {
+                                            callback(err, null);
+                                        } else {
+                                            callback(null, set);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+
+function generateRows(details, material, options, callback) {
+    var rows = [];
+    details.forEach(function (detail) {
+        var row = new Row(detail, material, options);
+        var currentRow = row;
+        var addedRow = false;
+
+        for (var i = 0; i < detail.demand; i++) {
+            if (!currentRow.add()) {
+                rows.push(currentRow);
+                currentRow = new Row(detail, material, options);
+                currentRow.add();
+
+                addedRow = true;
+            } else {
+                addedRow = false;
+            }
+        }
+
+        if (!addedRow) {
+            rows.push(currentRow);
+        }
+    });
+
+    callback(null, rows);
+}
+
+function generateLayouts(rows, material, options, callback) {
+
+}
+
+function generateSections(layouts, material, options, callback) {
+
+}
+
+function generateScheme(sections, material, options, callback) {
+
+}
+
+function generateSet(scheme, material, options, callback) {
+
+}
 
 module.exports = router;

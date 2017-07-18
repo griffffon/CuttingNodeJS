@@ -1,0 +1,10 @@
+extends layout
+
+block content
+    ul
+        each model, model_index in models
+            li
+                div
+                    a(href="/models/#{model.id}") #{model.name}
+                div Опис: #{model.description}
+                div Службова інформація: #{model.service_info}

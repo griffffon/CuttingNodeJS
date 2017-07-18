@@ -4,63 +4,103 @@ block content
     h1 #{model.name}
     h2 #{model.description}
 
-    ul
-        each detail, det_index in details
-            li
-                div #{detail.name}
-                canvas(id="canvas-#{det_index}" width="200" height="200" style="border:1px dashed #000000;")
-                script.
-                    var points = [];
-
-                each point in detail.points
+    form(action='/generate' method='POST')
+        ul
+            each detail, det_index in details
+                li
+                    div #{detail.name}
+                        br
+                        input(type="checkbox" class="detail-selector" name="detail-#{detail.id}" id="#{detail.id}")
+                        label Додати у розкрійні схеми
+                    canvas(id="canvas-#{det_index}" width="200" height="200" style="border:1px dashed #000000;")
                     script.
-                        points.push({
-                            X       : '#{point.X}',
-                            Y       : '#{point.Y}',
-                            priority: '#{point.priority}'
-                        });
+                        var points = [];
 
-                script.
-                    var canvas = document.getElementById('canvas-#{det_index}');
-                    var ctx = canvas.getContext("2d");
-                    ctx.fillStyle = "#000000";
+                    each point in detail.points
+                        script.
+                            points.push({
+                                X       : '#{point.X}',
+                                Y       : '#{point.Y}',
+                                priority: '#{point.priority}'
+                            });
 
-                    var canvasHeight = canvas.height;
-                    var canvasWidth = canvas.width;
+                    script.
+                        var canvas = document.getElementById('canvas-#{det_index}');
+                        var ctx = canvas.getContext("2d");
+                        ctx.fillStyle = "#000000";
 
-                    var mxy1 = canvasHeight / parseFloat('#{detail.height}');
-                    var mxy2 = canvasWidth / parseFloat('#{detail.width}');
-                    var localMxy = (mxy1 <= mxy2) ? mxy1 : mxy2;
+                        var canvasHeight = canvas.height;
+                        var canvasWidth = canvas.width;
 
-                    for (var i = 0; i < points.length; i++) {
-                        ctx.beginPath();
+                        var mxy1 = canvasHeight / parseFloat('#{detail.height}');
+                        var mxy2 = canvasWidth / parseFloat('#{detail.width}');
+                        var localMxy = (mxy1 <= mxy2) ? mxy1 : mxy2;
 
-                        if (i === (points.length - 1)) {
-                            ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
-                            ctx.lineTo((canvasWidth / 2) + points[0].X * localMxy, (canvasWidth / 2) - points[0].Y * localMxy);
-                        } else {
-                            ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
-                            ctx.lineTo((canvasWidth / 2) + points[i + 1].X * localMxy, (canvasWidth / 2) - points[i + 1].Y * localMxy);
+                        for (var i = 0; i < points.length; i++) {
+                            ctx.beginPath();
+
+                            if (i === (points.length - 1)) {
+                                ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
+                                ctx.lineTo((canvasWidth / 2) + points[0].X * localMxy, (canvasWidth / 2) - points[0].Y * localMxy);
+                            } else {
+                                ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
+                                ctx.lineTo((canvasWidth / 2) + points[i + 1].X * localMxy, (canvasWidth / 2) - points[i + 1].Y * localMxy);
+                            }
+
+                            ctx.stroke();
                         }
 
-                        ctx.stroke();
-                    }
+        div
+            label Довжина матеріалу, мм
+            input#matHeight(type="number" name="matHeight" min="0" value="750")
 
+        div
+            label Ширина матеріалу, мм
+            input#matWidth(type="number" name="matWidth" min="0" value="750")
 
+        div
+            label Товщина матеріалу, мм
+            input#matDepth(type="number" name="matDepth" min="0" value="2")
 
-                    //                    points.forEach(function (point) {
-                    //                        console.log(point);
-                    //                    })
+        div
+            label Відстань від краю матеріалу, мм
+            input#edgeDistance(type="number" name="edgeDistance" min="0" value="0")
 
-                    //var points = Array.from(JSON.parse('#/{detail.points}'));
-                    //console.log(points);
-                    //                    points.forEach(function (point) {
-                    //                    for(var i = 0; i < points.length; i++) {
-                    //                        console.log(points[i]);
-                    //                    }
+        div
+            label Міждетальний місток, мм
+            input#detailsBridge(type="number" name="detailsBridge" min="0" value="0")
 
-                    //                    ctx.moveTo(0, 0);
-                    //                    ctx.lineTo(200, 200);
-                    //                    ctx.moveTo(0, 200);
-                    //                    ctx.lineTo(200, 0);
-                    //                    ctx.stroke();
+        button#generateButton(type="submit") Генерувати
+
+    //script.
+        $('#generateButton').click(function () {
+            var selectors = document.getElementsByClassName('detail-selector');
+            var selected_ids = [];
+
+            for (var i = 0; i < selectors.length; i++) {
+                var selector = selectors[i];
+
+                if (selector.checked) {
+                    selected_ids.push(selector.id);
+                }
+            }
+
+            if (selected_ids.length > 0) {
+                var data = {
+                    details_ids  : selected_ids,
+                    material     : {
+                        height: $('#matHeight').val(),
+                        width : $('#matWidth').val(),
+                        depth : $('#matDepth').val()
+                    },
+                    edgeDistance : $('#edgeDistance').val(),
+                    detailsBridge: $('#detailsBridge').val()
+                }
+
+                $.get('/generate', data, function (response) {
+                    window.location = '/set/' + response.set_id;
+                });
+            } else {
+                alert('Не вибрана жодна деталь!');
+            }
+        });

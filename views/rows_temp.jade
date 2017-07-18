@@ -1,0 +1,32 @@
+extends layout
+
+block content
+    h1 Розкрійний план
+
+    canvas#canvas(width="700px" height="350px" style="border:1px dashed #000000;")
+
+    script.
+        var canvas = document.getElementById('canvas-#{det_index}');
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000000";
+
+        var canvasHeight = canvas.height;
+        var canvasWidth = canvas.width;
+
+        var mxy1 = canvasHeight / parseFloat('#{detail.height}');
+        var mxy2 = canvasWidth / parseFloat('#{detail.width}');
+        var localMxy = (mxy1 <= mxy2) ? mxy1 : mxy2;
+
+        for (var i = 0; i < points.length; i++) {
+            ctx.beginPath();
+
+            if (i === (points.length - 1)) {
+                ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
+                ctx.lineTo((canvasWidth / 2) + points[0].X * localMxy, (canvasWidth / 2) - points[0].Y * localMxy);
+            } else {
+                ctx.moveTo((canvasWidth / 2) + points[i].X * localMxy, (canvasWidth / 2) - points[i].Y * localMxy);
+                ctx.lineTo((canvasWidth / 2) + points[i + 1].X * localMxy, (canvasWidth / 2) - points[i + 1].Y * localMxy);
+            }
+
+            ctx.stroke();
+        }
