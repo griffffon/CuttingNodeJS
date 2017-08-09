@@ -11,7 +11,7 @@ function Detail(id, name, description, anyzotropy, demand, depth, width, height,
     this.depth = depth;
     this.width = width;
     this.height = height;
-    this.points = points;
+    this.points = points.slice(0);
     this.polarPoint = {x: 0, y: 0};
     this.Borders = {
         numTop   : 0,

@@ -458,31 +458,230 @@ router.post('/generate', function (req, res) {
                     eLogger.error(error);
                     res.sendStatus(500);
                 } else {
-                    generateRows(details, material, options, function (err, rows) {
+                    //Генерируем ряды деталей по типу детали
+                    var startTime = new Date();
+
+                    var generatedGroupsOfRows = [];
+                    async.eachSeries(details, function (detail, det_cb) {
+                        var detail350 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail350.rotate(350);
+                        var detail0 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        var detail10 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail10.rotate(10);
+                        var detail80 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail80.rotate(80);
+                        var detail90 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail90.rotate(90);
+                        var detail100 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail100.rotate(100);
+                        var detail170 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail170.rotate(170);
+                        var detail180 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail180.rotate(180);
+                        var detail190 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail190.rotate(190);
+                        var detail260 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail260.rotate(260);
+                        var detail270 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail270.rotate(270);
+                        var detail280 = new Detail(detail.id, detail.name, detail.description, detail.anyzotropy, detail.demand, detail.depth, detail.width, detail.height, detail.points);
+                        detail280.rotate(280);
+
+                        var object = {
+                            templateDetail: detail,
+                            results       : []
+                        };
+
+                        async.parallel([
+                            function (cb) {
+                                //350
+                                generateRows(detail350, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 350,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //0
+                                generateRows(detail0, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 0,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //10
+                                generateRows(detail10, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 10,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //80
+                                generateRows(detail80, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 80,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //90
+                                generateRows(detail90, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 90,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //100
+                                generateRows(detail100, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 100,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //170
+                                generateRows(detail170, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 170,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //180
+                                generateRows(detail180, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 180,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //190
+                                generateRows(detail190, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 190,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //260
+                                generateRows(detail260, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 260,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //270
+                                generateRows(detail270, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 270,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            },
+                            function (cb) {
+                                //280
+                                generateRows(detail280, material, options, function (err, rows) {
+                                    if (err) {
+                                        cb(err, null);
+                                    } else {
+                                        object.results.push({
+                                            orientation: 280,
+                                            rows       : rows
+                                        });
+                                        cb(null, rows);
+                                    }
+                                });
+                            }
+                        ], function (err, results) {
+                            if (err) {
+                                det_cb(err, null);
+                            } else {
+                                generatedGroupsOfRows.push(object);
+                                det_cb(null, null);
+                            }
+                        });
+                    }, function (err) {
                         if (err) {
                             eLogger.error(err);
                             res.sendStatus(500);
                         } else {
-                            console.log(rows);
-                            res.render('rows_temp', {
-                                rows    : rows,
-                                material: material
-                            });
-                            //res.redirect('/schemes/0');
-                            // res.render('schemes', {
-                            //     rows: rows
-                            // });
-                            // res.send(rows);
+                            var endTime = new Date();
+
+                            var seconds = (endTime.getTime() - startTime.getTime()) / 1000;
+                            console.log('Total time: ' + seconds);
+
+                            res.send(generatedGroupsOfRows);
                         }
                     });
-                    /*generate(details, material, function (err, set) {
-                     if (err) {
-                     eLogger.error(err);
-                     res.sendStatus(500);
-                     } else {
-                     res.send(details);
-                     }
-                     });*/
                 }
             });
         }
@@ -524,29 +723,37 @@ function generate(details, material, options, callback) {
     });
 }
 
-function generateRows(details, material, options, callback) {
+function generateRows(detail, material, options, callback) {
     var rows = [];
-    details.forEach(function (detail) {
-        var row = new Row(detail, material, options);
-        var currentRow = row;
-        var addedRow = false;
+    // details.forEach(function (detail) {
 
-        for (var i = 0; i < detail.demand; i++) {
-            if (!currentRow.add()) {
-                rows.push(currentRow);
-                currentRow = new Row(detail, material, options);
-                currentRow.add();
+    var row = new Row(detail, material, options);
+    var currentRow = row;
+    var finishedRow = false;
 
-                addedRow = true;
-            } else {
-                addedRow = false;
-            }
-        }
-
-        if (!addedRow) {
+    for (var i = 0; i < detail.demand; i++) {
+        if (!currentRow.add()) {
+            currentRow.finished = true;
+            currentRow.updatePointsArray();
+            currentRow.getBorders();
             rows.push(currentRow);
+
+            i = i * Math.floor(detail.demand / i);
+
+            currentRow = new Row(detail, material, options);
+            currentRow.add();
+
+            finishedRow = true;
+        } else {
+            finishedRow = false;
         }
-    });
+    }
+
+    if (!finishedRow) {
+        currentRow.finished = false;
+        rows.push(currentRow);
+    }
+    // });
 
     callback(null, rows);
 }
